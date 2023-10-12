@@ -29,7 +29,14 @@ fn main() {
         entry
             .read_to_string(&mut buf)
             .expect("failed to read path name");
-        let parsed_path = PathBuf::from(buf);
+        let parsed_path = PathBuf::from(&buf);
+
+        // This isn't very good, but eh
+        if !parsed_path.is_relative() || parsed_path.components().any(|e| e.as_os_str() == "..") {
+            println!("ERROR: {id} is a potentially dangerous path - {buf}");
+            return;
+        }
+
         paths.insert(id, parsed_path);
     });
 
