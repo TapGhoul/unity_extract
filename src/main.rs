@@ -29,7 +29,13 @@ fn main() {
         entry
             .read_to_string(&mut buf)
             .expect("failed to read path name");
-        let parsed_path = PathBuf::from(&buf);
+
+        let trimmed = buf
+            .split_terminator(&['\0', '\r', '\n'])
+            .next()
+            .expect("Invalid pathname");
+
+        let parsed_path = PathBuf::from(trimmed);
 
         // This isn't very good, but eh
         if !parsed_path.is_relative() || parsed_path.components().any(|e| e.as_os_str() == "..") {
