@@ -43,7 +43,7 @@ fn main() {
             return;
         }
 
-        paths.insert(id, parsed_path);
+        paths.insert(id, extract_base.join(parsed_path));
     });
 
     for_archive(f, "asset.meta", |mut entry, id| {
@@ -59,7 +59,6 @@ fn main() {
 
     for_archive(f, "asset", |mut entry, id| {
         let path = paths.remove(&id).expect("Can't unpack asset with no path");
-        let path = extract_base.join(path);
 
         let mut dir = path.clone();
         dir.pop();
