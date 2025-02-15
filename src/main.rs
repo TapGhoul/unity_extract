@@ -3,7 +3,7 @@ use flate2::read::GzDecoder;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tar::{Archive, Entry};
 
 #[derive(Parser, Debug)]
@@ -47,10 +47,26 @@ fn main() {
     });
 
     for_archive(f, "asset.meta", |mut entry, id| {
+        // Convert to .meta file
+        let mut path = paths
+            .get(&id)
+            .expect("Can't unpack asset with no path")
+            .to_owned()
+            .into_os_string();
+        path.push(".meta");
+        let path = Path::new(&path);
+
+        let dir = path
+            .parent()
+            .expect("Can't unpack asset with no destination directory");
+        std::fs::create_dir_all(dir).expect("Failed to unpack");
+
         let mut buf = String::new();
         entry
             .read_to_string(&mut buf)
             .expect("failed to read asset meta");
+
+        std::fs::write(path, &buf).expect("failed to write");
 
         if buf.lines().any(|e| e == "folderAsset: yes") {
             paths.remove(&id);
@@ -59,10 +75,6 @@ fn main() {
 
     for_archive(f, "asset", |mut entry, id| {
         let path = paths.remove(&id).expect("Can't unpack asset with no path");
-
-        let mut dir = path.clone();
-        dir.pop();
-        std::fs::create_dir_all(dir).expect("Failed to unpack");
 
         let mut w = File::create(path).expect("failed to create file");
         std::io::copy(&mut entry, &mut w).expect("failed to write");
