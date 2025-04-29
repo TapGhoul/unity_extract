@@ -12,3 +12,6 @@ clap = { version = "4.5.37", features = ["derive"] }
 
 [features]
 extract-meta = []
+
+[profile.release]
+lto = true
