@@ -2,6 +2,8 @@ use clap::Parser;
 use flate2::read::GzDecoder;
 use std::collections::HashMap;
 use std::fs::File;
+#[cfg(feature = "extract-meta")]
+use std::io::Write;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::PathBuf;
 use tar::{Archive, Entry};
@@ -51,6 +53,26 @@ fn main() {
         entry
             .read_to_string(&mut buf)
             .expect("failed to read asset meta");
+
+        #[cfg(feature = "extract-meta")]
+        {
+            let path = paths.get(&id).expect("Can't unpack meta with no path");
+
+            let parent = path
+                .parent()
+                .expect("cannot get parent of root (this should not be possible)");
+
+            let meta_file = parent.join(format!(
+                "{}.meta",
+                path.file_name()
+                    .expect("no meta filename?")
+                    .to_string_lossy()
+            ));
+
+            std::fs::create_dir_all(parent).expect("Failed to unpack");
+            let mut w = File::create(meta_file).expect("failed to create file");
+            w.write(buf.as_bytes()).expect("failed to write .meta file");
+        }
 
         if buf.lines().any(|e| e == "folderAsset: yes") {
             paths.remove(&id);
